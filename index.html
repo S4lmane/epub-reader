@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EPUB Reader Pro</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- Header -->
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-book-open"></i>
+                    <span>EPUB Reader Pro</span>
+                </div>
+                <div class="header-controls">
+                    <button class="btn-icon" id="addBookBtn" title="Add Book">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                    <button class="btn-icon" id="libraryBtn" title="Library">
+                        <i class="fas fa-library"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Book Library -->
+            <div class="library-section" id="librarySection">
+                <div class="library-header">
+                    <i class="fas fa-books"></i>
+                    <span>Your Library</span>
+                    <span class="book-count" id="bookCount">0 books</span>
+                </div>
+                <div class="library-list" id="libraryList">
+                    <div class="empty-library">
+                        <i class="fas fa-book"></i>
+                        <div>No books in library</div>
+                        <button class="btn-small" id="uploadFirstBook">Upload your first book</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload Section -->
+            <div class="upload-section" id="uploadSection">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-content">
+                        <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                        <div class="upload-text">Drop EPUB file here</div>
+                        <div class="upload-subtext">or click to browse</div>
+                    </div>
+                    <input type="file" id="fileInput" class="file-input" accept=".epub" multiple>
+                </div>
+            </div>
+
+            <!-- Table of Contents -->
+            <div class="toc-section">
+                <div class="toc-header">
+                    <i class="fas fa-list"></i>
+                    <span>Table of Contents</span>
+                </div>
+                <div class="toc-list" id="tocList">
+                    <div class="empty-state">
+                        <i class="fas fa-book"></i>
+                        <div>Select a book to view contents</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Reader -->
+        <div class="reader">
+            <!-- Reader Header -->
+            <div class="reader-header">
+                <div class="book-info">
+                    <div class="book-details">
+                        <div class="book-title" id="bookTitle">Select a book from your library</div>
+                        <div class="book-author" id="bookAuthor"></div>
+                    </div>
+                </div>
+
+                <div class="reader-controls">
+                    <!-- View Mode Toggle -->
+                    <div class="control-group">
+                        <button class="btn-icon" id="viewModeBtn" title="Toggle View Mode">
+                            <i class="fas fa-expand-alt"></i>
+                        </button>
+                        <span class="view-mode-text" id="viewModeText">Paginated</span>
+                    </div>
+
+                    <!-- Navigation -->
+                    <div class="control-group">
+                        <button class="btn" id="prevChapter" disabled>
+                            <i class="fas fa-chevron-left"></i>
+                            Previous
+                        </button>
+                        <button class="btn" id="nextChapter" disabled>
+                            Next
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+
+                    <!-- Progress -->
+                    <div class="progress-container">
+                        <div class="progress">
+                            <div class="progress-bar" id="progressBar"></div>
+                        </div>
+                        <div class="progress-text" id="progressText">0%</div>
+                    </div>
+
+                    <!-- Additional Controls -->
+                    <div class="control-group">
+                        <button class="btn-icon" id="highlightsBtn" title="View Highlights">
+                            <i class="fas fa-highlighter"></i>
+                        </button>
+                        <button class="btn-icon" id="settingsBtn" title="Settings">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reading Area -->
+            <div class="reading-area" id="readingArea">
+                <!-- Paginated View -->
+                <div class="page-view" id="pageView">
+                    <div class="page-container" id="pageContainer">
+                        <div class="page">
+                            <div class="empty-state">
+                                <i class="fas fa-book-reader"></i>
+                                <div>Select a book to start reading</div>
+                                <div class="shortcuts-hint">Press <kbd>?</kbd> for keyboard shortcuts</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="page-nav prev" id="prevPage" disabled>
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button class="page-nav next" id="nextPage" disabled>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+
+                <!-- Continuous View -->
+                <div class="continuous-view hidden" id="continuousView">
+                    <div class="continuous-content" id="continuousContent">
+                        <div class="empty-state">
+                            <i class="fas fa-scroll"></i>
+                            <div>Continuous reading view</div>
+                            <div>Select a book to start reading</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals and Overlays -->
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay hidden" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loadingText">Loading EPUB...</div>
+        <div class="loading-progress" id="loadingProgress"></div>
+    </div>
+
+    <!-- Highlights Panel -->
+    <div class="highlights-panel hidden" id="highlightsPanel">
+        <div class="panel-header">
+            <h3><i class="fas fa-highlighter"></i> Highlights</h3>
+            <button class="btn-icon" id="closeHighlights">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="highlights-list" id="highlightsList">
+            <div class="empty-highlights">
+                <i class="fas fa-highlighter"></i>
+                <div>No highlights yet</div>
+                <div>Select text while reading to add highlights</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Keyboard Shortcuts Modal -->
+    <div class="modal-overlay hidden" id="shortcutsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-keyboard"></i> Keyboard Shortcuts</h3>
+                <button class="btn-icon" id="closeShortcuts">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-content">
+                <div class="shortcuts-grid">
+                    <div class="shortcut-section">
+                        <h4>Navigation</h4>
+                        <div class="shortcut-item">
+                            <kbd>←</kbd> <kbd>→</kbd>
+                            <span>Previous/Next page</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <kbd>Space</kbd>
+                            <span>Next page</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <kbd>Shift</kbd> + <kbd>Space</kbd>
+                            <span>Previous page</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <kbd>Home</kbd> <kbd>End</kbd>
+                            <span>First/Last chapter</span>
+                        </div>
+                    </div>
+
+                    <div class="shortcut-section">
+                        <h4>Books</h4>
+                        <div class="shortcut-item">
+                            <kbd>Ctrl</kbd> + <kbd>←</kbd>
+                            <span>Previous book</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <kbd>Ctrl</kbd> + <kbd>→</kbd>
+                            <span>Next book</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <kbd>Ctrl</kbd> + <kbd>O</kbd>
+                            <span>Open book</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <kbd>L</kbd>
+                            <span>Toggle library</span>
+                        </div>
+                    </div>
+
+                    <div class="shortcut-section">
+                        <h4>View</h4>
+                        <div class="shortcut-item">
+                            <kbd>V</kbd>
+                            <span>Toggle view mode</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <kbd>H</kbd>
+                            <span>Toggle highlights</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <kbd>D</kbd>
+                            <span>Toggle debug panel</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <kbd>?</kbd>
+                            <span>Show shortcuts</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Menu for Highlighting -->
+    <div class="context-menu hidden" id="contextMenu">
+        <button class="context-item" id="highlightYellow">
+            <i class="fas fa-highlighter" style="color: #ffd700;"></i>
+            Highlight
+        </button>
+        <button class="context-item" id="highlightBlue">
+            <i class="fas fa-highlighter" style="color: #87ceeb;"></i>
+            Blue Highlight
+        </button>
+        <button class="context-item" id="highlightGreen">
+            <i class="fas fa-highlighter" style="color: #90ee90;"></i>
+            Green Highlight
+        </button>
+        <button class="context-item" id="removeHighlight">
+            <i class="fas fa-eraser"></i>
+            Remove Highlight
+        </button>
+        <hr>
+        <button class="context-item" id="copyText">
+            <i class="fas fa-copy"></i>
+            Copy Text
+        </button>
+    </div>
+
+    <!-- Debug Panel -->
+    <div class="debug-panel" id="debugPanel">
+        <div class="debug-header">
+            <span>Debug Console</span>
+            <button class="btn-icon" id="clearDebug">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+        <div class="debug-content" id="debugContent"></div>
+    </div>
+
+    <!-- Floating Action Buttons -->
+    <div class="floating-controls">
+        <button class="fab" id="debugToggle" title="Toggle Debug Panel">
+            <i class="fas fa-bug"></i>
+        </button>
+        <button class="fab" id="shortcutsToggle" title="Keyboard Shortcuts">
+            <i class="fas fa-keyboard"></i>
+        </button>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+</body>
+</html>
